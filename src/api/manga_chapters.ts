@@ -1,59 +1,64 @@
 import axios from "axios";
 
-export const fetch_maganda_details_by_id_API = async (manga_id: string) => {
+/**
+ * Fetches English chapters for a given manga ID, paginated.
+ *
+ * @param mangaId - The MangaDex manga ID.
+ * @param page - Optional page number (1-based). Default is 1.
+ * @returns A Promise resolving to an array of chapter metadata.
+ */
+export async function fetchChaptersByMangaId(
+  mangaId: string,
+  page: number = 1
+) {
+  const limit = 100;
+  const offset = (page - 1) * limit;
+
   try {
-    // Fetch the main manga data
     const response = await axios.get(
-      `https://api.mangadex.org/manga/${manga_id}`,
+      `https://api.mangadex.org/manga/${mangaId}/feed`,
       {
         params: {
-          includes: ["author", "artist", "cover_art"],
+          includeFuturePublishAt: 0,
+          includeEmptyPages: 0,
+          translatedLanguage: ["en"], // ✅ Filter by English only
+          limit,
+          offset,
+          order: {
+            chapter: "desc",
+          },
+        },
+        paramsSerializer: (params) => {
+          // Axios needs help serializing arrays into `translatedLanguage[]=en`
+          const searchParams = new URLSearchParams();
+          for (const key in params) {
+            const value = params[key];
+            if (Array.isArray(value)) {
+              value.forEach((v) => searchParams.append(`${key}[]`, v));
+            } else if (typeof value === "object") {
+              for (const k in value) {
+                searchParams.append(`${key}[${k}]`, value[k]);
+              }
+            } else {
+              searchParams.append(key, value);
+            }
+          }
+          return searchParams.toString();
         },
       }
     );
 
-    const manga = response.data.data;
-    const attrs = manga.attributes;
-
-    const coverRel = manga.relationships.find(
-      (rel: any) => rel.type === "cover_art"
-    );
-
-    let coverFileName = null;
-    if (coverRel) {
-      const coverId = coverRel.id;
-      const coverResponse = await axios.get(
-        `https://api.mangadex.org/cover/${coverId}`
-      );
-      coverFileName = coverResponse.data.data.attributes.fileName;
-    }
-
-    const coverUrl = coverFileName
-      ? `https://uploads.mangadex.org/covers/${manga.id}/${coverFileName}.512.jpg`
-      : null;
-
-    return {
-      id: manga.id,
-      title: attrs.title,
-      altTitles: attrs.altTitles,
-      description: attrs.description,
-      status: attrs.status,
-      year: attrs.year,
-      originalLanguage: attrs.originalLanguage,
-      lastVolume: attrs.lastVolume,
-      lastChapter: attrs.lastChapter,
-      demographic: attrs.publicationDemographic,
-      contentRating: attrs.contentRating,
-      tags: attrs.tags.map((tag: any) => tag.attributes.name.en),
-      links: attrs.links,
-      createdAt: attrs.createdAt,
-      updatedAt: attrs.updatedAt,
-      availableTranslatedLanguages: attrs.availableTranslatedLanguages,
-      latestUploadedChapter: attrs.latestUploadedChapter,
-      coverUrl,
-    };
+    return response.data.data.map((chapter: any) => ({
+      id: chapter.id,
+      title: chapter.attributes.title,
+      chapter: chapter.attributes.chapter,
+      volume: chapter.attributes.volume,
+      language: chapter.attributes.translatedLanguage,
+      publishAt: chapter.attributes.publishAt,
+      externalUrl: chapter.attributes.externalUrl,
+    }));
   } catch (error) {
-    console.error("Failed to fetch manga by ID:", error);
-    throw new Error("Manga fetch error");
+    console.error("Failed to fetch chapters:", error);
+    throw new Error("Failed to fetch chapters");
   }
-};
+}
