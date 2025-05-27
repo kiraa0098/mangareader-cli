@@ -8,6 +8,7 @@ program
   .version("1.0.0")
   .argument("[query]", "Manga search term")
   .action(async (query: any) => {
-    const results = await (0, search_manga.searchManga)(query);
+    await (0, search_manga.searchManga)(query);
   });
+
 program.parse(process.argv);

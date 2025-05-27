@@ -1,9 +1,16 @@
-import { clearTerminal } from "../helper/clear_terminal";
 import inquirer from "inquirer";
+import fs from "fs/promises";
+import path from "path";
+import os from "os";
+import { fileURLToPath } from "url";
+import open from "open";
+import { clearTerminal } from "../helper/clear_terminal";
 import { searchMangaAPI } from "../api/search_manga";
 import { fetchChaptersByMangaId } from "../api/manga_chapters";
 import { displayManga } from "../helper/display_manga";
 import { displayChapters } from "../helper/display_chapters";
+import { fetchChapterPages } from "../api/chapter_pages";
+import { generateHtmlViewer } from "../helper/generate_html_viewerl";
 
 const COLUMNS = 3;
 const DELAY_MS = 3000;
@@ -72,6 +79,15 @@ async function handleChapterSelection(
       console.log(
         `\nSelected Chapter: Ch. ${selectedChapter.chapter} - ${selectedChapter.title}`
       );
+      const pages = await fetchChapterPages(selectedChapter.id);
+
+      const htmlFile = await generateHtmlViewer(
+        pages.map((page) => page.url),
+        `Chapter ${selectedChapter.chapter} – ${selectedChapter.title}`
+      );
+
+      await open(htmlFile);
+
       // Here you would handle the chapter selection
       return { shouldReturnToManga: false };
     }
