@@ -11,6 +11,9 @@ import { displayManga } from "../helper/display_manga";
 import { displayChapters } from "../helper/display_chapters";
 import { fetchChapterPages } from "../api/chapter_pages";
 import { generateHtmlViewer } from "../helper/generate_html_viewerl";
+import { displayMangaDetails } from "../helper/display_manga_details";
+import chalk from "chalk";
+import ora from "ora";
 
 const COLUMNS = 3;
 const DELAY_MS = 3000;
@@ -20,71 +23,37 @@ async function handleChapterViewing(
   chapterTitle: string,
   chapterNumber: string
 ): Promise<void> {
-  while (true) {
-    try {
-      clearTerminal();
-      console.log(`\nLoading Chapter ${chapterNumber} - ${chapterTitle}...`);
+  const spinner = ora(`Loading Chapter ${chapterNumber} - ${chapterTitle}...`).start();
+  try {
+    const pages = await fetchChapterPages(chapterId);
+    spinner.succeed();
 
-      const pages = await fetchChapterPages(chapterId);
-
-      if (!pages || !pages.length) {
-        console.log("❌ No pages found for this chapter.");
-        await new Promise((r) => setTimeout(r, DELAY_MS));
-        return;
-      }
-
-      const htmlFile = await generateHtmlViewer(
-        pages.map((page) => page.url),
-        `Chapter ${chapterNumber} – ${chapterTitle}`
-      );
-
-      await open(htmlFile);
-
-      console.log("\n📖 Chapter opened in browser!");
-      console.log('Type "return" to go back to chapters, or "exit" to quit');
-
-      const { action } = await inquirer.prompt([
-        {
-          type: "input",
-          name: "action",
-          message: "[action >]",
-          validate: (val) => {
-            if (!val || typeof val !== "string" || !val.trim()) {
-              return 'Please enter a command: "return" or "exit"';
-            }
-            return true; // Allow any input, we'll handle validation after
-          },
-        },
-      ]);
-
-      const command = action.trim().toLowerCase();
-
-      if (command === "exit") {
-        process.exit(0);
-      } else if (command === "return") {
-        return; // Go back to chapter selection
-      } else {
-        console.log(`❌ Invalid command: "${action}"`);
-        console.log('Valid commands: "return" or "exit"');
-        console.log("🔄 Invalid input, retrying again...");
-
-        // Clear any pending input and wait
-        process.stdin.pause();
-        await new Promise((r) => setTimeout(r, DELAY_MS));
-        process.stdin.resume();
-
-        continue; // Continue the loop to ask again
-      }
-    } catch (error) {
-      console.log(
-        `❌ Error loading chapter: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
-      console.log("🔄 Returning to chapter selection...");
+    if (!pages || !pages.length) {
+      console.log("❌ No pages found for this chapter.");
       await new Promise((r) => setTimeout(r, DELAY_MS));
       return;
     }
+
+    const htmlFile = await generateHtmlViewer(
+      pages.map((page) => page.url),
+      `Chapter ${chapterNumber} – ${chapterTitle}`
+    );
+
+    await open(htmlFile);
+
+    console.log("\nChapter opened in browser!");
+    console.log("Returning to chapter selection in 3 seconds...");
+    await new Promise((r) => setTimeout(r, DELAY_MS));
+  } catch (error) {
+    spinner.fail();
+    console.log(
+      `❌ Error loading chapter: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
+    console.log("🔄 Returning to chapter selection...");
+    await new Promise((r) => setTimeout(r, DELAY_MS));
+    return;
   }
 }
 
@@ -95,11 +64,12 @@ async function handleChapterSelection(
   let chapterPage = 1;
 
   while (true) {
+    const spinner = ora(`Fetching chapters for ${mangaTitle}...`).start();
     try {
+      const chapters = await fetchChaptersByMangaId(mangaId, chapterPage);
+      spinner.succeed();
       clearTerminal();
       console.log(`Selected Manga: ${mangaTitle} — Page ${chapterPage}\n`);
-
-      const chapters = await fetchChaptersByMangaId(mangaId, chapterPage);
 
       if (!chapters || !chapters.length) {
         console.log("⚠ No chapters found on this page.");
@@ -156,16 +126,39 @@ async function handleChapterSelection(
         // Try to parse as number
         const num = parseInt(chapterInput.trim());
         if (!isNaN(num) && num >= 1 && num <= chapters.length) {
-          const chapterIndex = num - 1;
-          const selectedChapter = chapters[chapterIndex];
+          let chapterIndex = num - 1;
 
-          // Handle chapter viewing and return back to chapter selection
-          await handleChapterViewing(
-            selectedChapter.id,
-            selectedChapter.title,
-            selectedChapter.chapter
-          );
-          // Continue the chapter selection loop after viewing
+          while (true) {
+            const selectedChapter = chapters[chapterIndex];
+
+            await handleChapterViewing(
+              selectedChapter.id,
+              selectedChapter.title,
+              selectedChapter.chapter
+            );
+
+            // After viewing, ask about the next chapter.
+            // The "next" chapter is at `chapterIndex - 1` because of descending sort.
+            if (chapterIndex > 0) {
+              const { readNext } = await inquirer.prompt([
+                {
+                  type: "confirm",
+                  name: "readNext",
+                  message: `Read next chapter? (Ch. ${chapters[chapterIndex - 1].chapter})`,
+                  default: true,
+                },
+              ]);
+
+              if (readNext) {
+                chapterIndex--; // Move to the next chapter
+                continue; // Continue the inner while loop
+              }
+            }
+            
+            // If no next chapter or user says no, break the inner loop
+            // and go back to the main chapter selection loop.
+            break;
+          }
         } else {
           clearTerminal();
           console.log(`❌ Invalid input: "${chapterInput}"`);
@@ -183,6 +176,7 @@ async function handleChapterSelection(
         }
       }
     } catch (error) {
+      spinner.fail();
       console.log(
         `❌ Error in chapter selection: ${
           error instanceof Error ? error.message : "Unknown error"
@@ -199,11 +193,12 @@ async function handleMangaSelection(query: string): Promise<boolean> {
   let page = 1;
 
   while (true) {
+    const spinner = ora(`Searching for "${query}"...`).start();
     try {
+      const searchResult = await searchMangaAPI(query, page);
+      spinner.succeed();
       clearTerminal();
       console.log(`Search: ${query} — Page ${page}\n`);
-
-      const searchResult = await searchMangaAPI(query, page);
       const mangas = searchResult?.mangas || [];
 
       if (!mangas || !mangas.length) {
@@ -217,7 +212,7 @@ async function handleMangaSelection(query: string): Promise<boolean> {
           console.log("❌ No results found for this search.");
           console.log("🔄 Returning to search...");
           await new Promise((r) => setTimeout(r, DELAY_MS));
-          return false; // Return to search instead of exiting
+          return false;
         }
       }
 
@@ -235,7 +230,7 @@ async function handleMangaSelection(query: string): Promise<boolean> {
             if (!val || typeof val !== "string" || !val.trim()) {
               return "Please enter a command or manga number";
             }
-            return true; // Allow any input, we'll handle validation after
+            return true;
           },
         },
       ]);
@@ -252,30 +247,41 @@ async function handleMangaSelection(query: string): Promise<boolean> {
           await new Promise((r) => setTimeout(r, DELAY_MS));
         }
       } else if (command === "search") {
-        return false; // Return to search
+        return false;
       } else if (command === "exit") {
         process.exit(0);
       } else {
-        // Try to parse as number
         const num = parseInt(input.trim());
         if (!isNaN(num) && num >= 1 && num <= mangas.length) {
           const index = num - 1;
           const selected = mangas[index];
-          const title =
-            selected?.title?.en ||
-            (selected?.title && Object.values(selected.title)[0]) ||
-            "Unknown Title";
 
-          const { shouldReturnToManga } = await handleChapterSelection(
-            selected.id,
-            title
-          );
+          clearTerminal();
+          displayMangaDetails(selected);
 
-          if (!shouldReturnToManga) {
-            // If we don't want to return to manga, continue the manga selection loop
+          const { action } = await inquirer.prompt([
+            {
+              type: "list",
+              name: "action",
+              message: "What do you want to do?",
+              choices: [
+                { name: "View Chapters", value: "view_chapters" },
+                { name: "Back to manga list", value: "back" },
+              ],
+            },
+          ]);
+
+          if (action === "view_chapters") {
+            const title =
+              selected?.title?.en ||
+              (selected?.title && Object.values(selected.title)[0]) ||
+              "Unknown Title";
+
+            await handleChapterSelection(selected.id, title);
+            continue;
+          } else {
             continue;
           }
-          // Otherwise continue manga selection loop
         } else {
           clearTerminal();
           console.log(`❌ Invalid input: "${input}"`);
@@ -284,15 +290,15 @@ async function handleMangaSelection(query: string): Promise<boolean> {
           );
           console.log("🔄 Invalid input, retrying again...");
 
-          // Clear any pending input and wait
           process.stdin.pause();
           await new Promise((r) => setTimeout(r, DELAY_MS));
           process.stdin.resume();
 
-          continue; // Continue the loop to ask again
+          continue;
         }
       }
     } catch (error) {
+      spinner.fail();
       console.log(
         `❌ Error in manga selection: ${
           error instanceof Error ? error.message : "Unknown error"
@@ -300,44 +306,46 @@ async function handleMangaSelection(query: string): Promise<boolean> {
       );
       console.log("🔄 Returning to search...");
       await new Promise((r) => setTimeout(r, DELAY_MS));
-      return false; // Return to search on error
+      return false;
     }
   }
 }
 
 export async function searchManga(defaultQuery: string = ""): Promise<void> {
+  let searchQuery = defaultQuery;
   while (true) {
     try {
       clearTerminal();
 
-      const { query } = await inquirer.prompt([
-        {
-          type: "input",
-          name: "query",
-          message: "Search Manga [>]:",
-          default: defaultQuery,
-          validate: (val) => {
-            if (!val || typeof val !== "string" || !val.trim()) {
-              return "Please enter a search query (cannot be empty)";
-            }
-            return true;
-          },
-        },
-      ]);
-
-      const searchQuery = query.trim();
-
       if (!searchQuery) {
-        console.log("❌ Search query cannot be empty.");
-        await new Promise((r) => setTimeout(r, DELAY_MS));
-        continue;
+        const { query } = await inquirer.prompt([
+          {
+            type: "input",
+            name: "query",
+            message: "Search Manga [>]:",
+            default: "",
+            validate: (val) => {
+              if (!val || typeof val !== "string" || !val.trim()) {
+                return "Please enter a search query (cannot be empty)";
+              }
+              return true;
+            },
+          },
+        ]);
+        searchQuery = query.trim();
+
+        if (!searchQuery) {
+          console.log("❌ Search query cannot be empty.");
+          await new Promise((r) => setTimeout(r, DELAY_MS));
+          continue;
+        }
       }
 
       const shouldContinueSearch = await handleMangaSelection(searchQuery);
 
       if (!shouldContinueSearch) {
-        // Reset default query for new search
-        defaultQuery = "";
+        // User wants a new search, so clear the query to trigger the prompt
+        searchQuery = "";
         continue;
       }
 
@@ -351,7 +359,7 @@ export async function searchManga(defaultQuery: string = ""): Promise<void> {
       );
       console.log("🔄 Restarting search...");
       await new Promise((r) => setTimeout(r, DELAY_MS));
-      defaultQuery = ""; // Reset default query on error
+      searchQuery = ""; // Reset default query on error
     }
   }
 }
