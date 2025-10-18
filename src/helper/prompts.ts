@@ -129,6 +129,7 @@ export async function handleChapterSelection(
             { name: "Exit", value: "exit" },
           ],
           pageSize: 20,
+          loop: false,
         },
       ]);
 
@@ -296,6 +297,7 @@ export async function handleMangaSelection(query: string): Promise<boolean> {
             { name: "Exit", value: "exit" },
           ],
           pageSize: 15,
+          loop: false,
         },
       ]);
 

@@ -127,6 +127,7 @@ function handleChapterSelection(mangaId, mangaTitle) {
                             { name: "Exit", value: "exit" },
                         ],
                         pageSize: 20,
+                        loop: false,
                     },
                 ]);
                 if (selectedIndex === "next") {
@@ -283,6 +284,7 @@ function handleMangaSelection(query) {
                             { name: "Exit", value: "exit" },
                         ],
                         pageSize: 15,
+                        loop: false,
                     },
                 ]);
                 if (selectedIndex === "next") {
