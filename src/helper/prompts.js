@@ -225,8 +225,6 @@ function handleMangaSelection(query) {
             try {
                 const searchResult = yield (0, search_manga_1.searchMangaAPI)(query, page);
                 spinner.succeed();
-                (0, clear_terminal_1.clearTerminal)();
-                console.log(`Search: ${query} — Page ${page}\n`);
                 const mangas = (searchResult === null || searchResult === void 0 ? void 0 : searchResult.mangas) || [];
                 if (!mangas || !mangas.length) {
                     console.log("⚠ No results found on this page.");
@@ -240,7 +238,7 @@ function handleMangaSelection(query) {
                                 message: "Press Enter to continue...",
                             },
                         ]);
-                        continue;
+                        continue; // Continue outer loop to re-fetch previous page
                     }
                     else {
                         console.log("❌ No results found for this search.");
@@ -254,47 +252,52 @@ function handleMangaSelection(query) {
                         return false;
                     }
                 }
-                const mangaChoices = mangas.map((manga, index) => {
-                    const title = manga.title.en ||
-                        Object.values(manga.title)[0] ||
-                        "Unknown Title";
-                    const year = manga.year ? `(${manga.year})` : "";
-                    const status = manga.status
-                        ? `- ${manga.status.charAt(0).toUpperCase() + manga.status.slice(1)}`
-                        : "";
-                    const coloredTitle = chalk_1.default.cyan(title);
-                    const details = chalk_1.default.gray(`${year} ${status}`.trim());
-                    return {
-                        name: `[${index + 1}] ${coloredTitle} ${details}`,
-                        value: index,
-                    };
-                });
-                const { selectedIndex } = yield inquirer_1.default.prompt([
-                    {
-                        type: "list",
-                        name: "selectedIndex",
-                        message: "Select a manga or action",
-                        choices: [
-                            ...mangaChoices,
-                            new inquirer_1.default.Separator(),
-                            { name: "Next Page", value: "next" },
-                            { name: "Previous Page", value: "back" },
-                            { name: "New Search", value: "search" },
-                            { name: "Help", value: "help" },
-                            { name: "Exit", value: "exit" },
-                        ],
-                        pageSize: 15,
-                        loop: false,
-                    },
-                ]);
-                if (selectedIndex === "next") {
-                    page++;
-                }
-                else if (selectedIndex === "back") {
-                    if (page > 1) {
-                        page--;
+                // Inner loop for UI interaction on the current page
+                while (true) {
+                    (0, clear_terminal_1.clearTerminal)();
+                    console.log(`Search: ${query} — Page ${page}\n`);
+                    const mangaChoices = mangas.map((manga, index) => {
+                        const title = manga.title.en ||
+                            Object.values(manga.title)[0] ||
+                            "Unknown Title";
+                        const year = manga.year ? `(${manga.year})` : "";
+                        const status = manga.status
+                            ? `- ${manga.status.charAt(0).toUpperCase() + manga.status.slice(1)}`
+                            : "";
+                        const coloredTitle = chalk_1.default.cyan(title);
+                        const details = chalk_1.default.gray(`${year} ${status}`.trim());
+                        return {
+                            name: `[${index + 1}] ${coloredTitle} ${details}`,
+                            value: index,
+                        };
+                    });
+                    const { selectedIndex } = yield inquirer_1.default.prompt([
+                        {
+                            type: "list",
+                            name: "selectedIndex",
+                            message: "Select a manga or action",
+                            choices: [
+                                ...mangaChoices,
+                                new inquirer_1.default.Separator(),
+                                { name: "Next Page", value: "next" },
+                                { name: "Previous Page", value: "back" },
+                                { name: "New Search", value: "search" },
+                                { name: "Help", value: "help" },
+                                { name: "Exit", value: "exit" },
+                            ],
+                            pageSize: 15,
+                            loop: false,
+                        },
+                    ]);
+                    if (selectedIndex === "next") {
+                        page++;
+                        break; // Break inner loop to fetch next page
                     }
-                    else {
+                    else if (selectedIndex === "back") {
+                        if (page > 1) {
+                            page--;
+                            break; // Break inner loop to fetch previous page
+                        }
                         console.log("⚠ Already at the first page.");
                         yield inquirer_1.default.prompt([
                             {
@@ -303,49 +306,52 @@ function handleMangaSelection(query) {
                                 message: "Press Enter to continue...",
                             },
                         ]);
+                        continue; // Re-show prompt for the same page
                     }
-                }
-                else if (selectedIndex === "search") {
-                    return false;
-                }
-                else if (selectedIndex === "help") {
-                    (0, help_1.displayHelp)();
-                    yield inquirer_1.default.prompt([
-                        {
-                            type: "input",
-                            name: "continue",
-                            message: "Press Enter to return to the manga list...",
-                        },
-                    ]);
-                    continue;
-                }
-                else if (selectedIndex === "exit") {
-                    process.exit(0);
-                }
-                else {
-                    const selected = mangas[selectedIndex];
-                    (0, clear_terminal_1.clearTerminal)();
-                    (0, display_manga_details_1.displayMangaDetails)(selected);
-                    const { action } = yield inquirer_1.default.prompt([
-                        {
-                            type: "list",
-                            name: "action",
-                            message: "What do you want to do?",
-                            choices: [
-                                { name: "View Chapters", value: "view_chapters" },
-                                { name: "Back to manga list", value: "back" },
-                            ],
-                        },
-                    ]);
-                    if (action === "view_chapters") {
-                        const title = ((_a = selected === null || selected === void 0 ? void 0 : selected.title) === null || _a === void 0 ? void 0 : _a.en) ||
-                            ((selected === null || selected === void 0 ? void 0 : selected.title) && Object.values(selected.title)[0]) ||
-                            "Unknown Title";
-                        yield handleChapterSelection(selected.id, title);
-                        continue;
+                    else if (selectedIndex === "search") {
+                        return false;
+                    }
+                    else if (selectedIndex === "help") {
+                        (0, help_1.displayHelp)();
+                        yield inquirer_1.default.prompt([
+                            {
+                                type: "input",
+                                name: "continue",
+                                message: "Press Enter to return to the manga list...",
+                            },
+                        ]);
+                        continue; // Re-show prompt for the same page
+                    }
+                    else if (selectedIndex === "exit") {
+                        process.exit(0);
                     }
                     else {
-                        continue;
+                        const selected = mangas[selectedIndex];
+                        (0, clear_terminal_1.clearTerminal)();
+                        (0, display_manga_details_1.displayMangaDetails)(selected);
+                        const { action } = yield inquirer_1.default.prompt([
+                            {
+                                type: "list",
+                                name: "action",
+                                message: "What do you want to do?",
+                                choices: [
+                                    { name: "View Chapters", value: "view_chapters" },
+                                    { name: "Back to manga list", value: "back" },
+                                ],
+                            },
+                        ]);
+                        if (action === "view_chapters") {
+                            const title = ((_a = selected === null || selected === void 0 ? void 0 : selected.title) === null || _a === void 0 ? void 0 : _a.en) ||
+                                ((selected === null || selected === void 0 ? void 0 : selected.title) && Object.values(selected.title)[0]) ||
+                                "Unknown Title";
+                            yield handleChapterSelection(selected.id, title);
+                            // After returning, re-show the same manga list instantly
+                            continue; // Continue the inner loop
+                        }
+                        else {
+                            // If "Back to manga list" is chosen, just re-show the list
+                            continue; // Continue the inner loop
+                        }
                     }
                 }
             }

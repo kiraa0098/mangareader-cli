@@ -232,8 +232,7 @@ export async function handleMangaSelection(query: string): Promise<boolean> {
     try {
       const searchResult = await searchMangaAPI(query, page);
       spinner.succeed();
-      clearTerminal();
-      console.log(`Search: ${query} — Page ${page}\n`);
+
       const mangas = searchResult?.mangas || [];
 
       if (!mangas || !mangas.length) {
@@ -248,7 +247,7 @@ export async function handleMangaSelection(query: string): Promise<boolean> {
               message: "Press Enter to continue...",
             },
           ]);
-          continue;
+          continue; // Continue outer loop to re-fetch previous page
         } else {
           console.log("❌ No results found for this search.");
           await inquirer.prompt([
@@ -262,51 +261,58 @@ export async function handleMangaSelection(query: string): Promise<boolean> {
         }
       }
 
-      const mangaChoices = mangas.map((manga: any, index: number) => {
-        const title =
-          manga.title.en ||
-          Object.values(manga.title)[0] ||
-          "Unknown Title";
+      // Inner loop for UI interaction on the current page
+      while (true) {
+        clearTerminal();
+        console.log(`Search: ${query} — Page ${page}\n`);
 
-        const year = manga.year ? `(${manga.year})` : "";
-        const status = manga.status
-          ? `- ${manga.status.charAt(0).toUpperCase() + manga.status.slice(1)}`
-          : "";
+        const mangaChoices = mangas.map((manga: any, index: number) => {
+          const title =
+            manga.title.en ||
+            Object.values(manga.title)[0] ||
+            "Unknown Title";
 
-        const coloredTitle = chalk.cyan(title);
-        const details = chalk.gray(`${year} ${status}`.trim());
+          const year = manga.year ? `(${manga.year})` : "";
+          const status = manga.status
+            ? `- ${manga.status.charAt(0).toUpperCase() + manga.status.slice(1)}`
+            : "";
 
-        return {
-          name: `[${index + 1}] ${coloredTitle} ${details}`,
-          value: index,
-        };
-      });
+          const coloredTitle = chalk.cyan(title);
+          const details = chalk.gray(`${year} ${status}`.trim());
 
-      const { selectedIndex } = await inquirer.prompt([
-        {
-          type: "list",
-          name: "selectedIndex",
-          message: "Select a manga or action",
-          choices: [
-            ...mangaChoices,
-            new inquirer.Separator(),
-            { name: "Next Page", value: "next" },
-            { name: "Previous Page", value: "back" },
-            { name: "New Search", value: "search" },
-            { name: "Help", value: "help" },
-            { name: "Exit", value: "exit" },
-          ],
-          pageSize: 15,
-          loop: false,
-        },
-      ]);
+          return {
+            name: `[${index + 1}] ${coloredTitle} ${details}`,
+            value: index,
+          };
+        });
 
-      if (selectedIndex === "next") {
-        page++;
-      } else if (selectedIndex === "back") {
-        if (page > 1) {
-          page--;
-        } else {
+        const { selectedIndex } = await inquirer.prompt([
+          {
+            type: "list",
+            name: "selectedIndex",
+            message: "Select a manga or action",
+            choices: [
+              ...mangaChoices,
+              new inquirer.Separator(),
+              { name: "Next Page", value: "next" },
+              { name: "Previous Page", value: "back" },
+              { name: "New Search", value: "search" },
+              { name: "Help", value: "help" },
+              { name: "Exit", value: "exit" },
+            ],
+            pageSize: 15,
+            loop: false,
+          },
+        ]);
+
+        if (selectedIndex === "next") {
+          page++;
+          break; // Break inner loop to fetch next page
+        } else if (selectedIndex === "back") {
+          if (page > 1) {
+            page--;
+            break; // Break inner loop to fetch previous page
+          }
           console.log("⚠ Already at the first page.");
           await inquirer.prompt([
             {
@@ -315,71 +321,74 @@ export async function handleMangaSelection(query: string): Promise<boolean> {
               message: "Press Enter to continue...",
             },
           ]);
-        }
-      } else if (selectedIndex === "search") {
-        return false;
-      } else if (selectedIndex === "help") {
-        displayHelp();
-        await inquirer.prompt([
-          {
-            type: "input",
-            name: "continue",
-            message: "Press Enter to return to the manga list...",
-          },
-        ]);
-        continue;
-      } else if (selectedIndex === "exit") {
-        process.exit(0);
-      } else {
-        const selected = mangas[selectedIndex];
-
-        clearTerminal();
-        displayMangaDetails(selected);
-
-        const { action } = await inquirer.prompt([
-          {
-            type: "list",
-            name: "action",
-            message: "What do you want to do?",
-            choices: [
-              { name: "View Chapters", value: "view_chapters" },
-              { name: "Back to manga list", value: "back" },
-            ],
-          },
-        ]);
-
-        if (action === "view_chapters") {
-          const title =
-            selected?.title?.en ||
-            (selected?.title && Object.values(selected.title)[0]) ||
-            "Unknown Title";
-
-          await handleChapterSelection(selected.id, title);
-          continue;
-        } else {
-          continue;
-        }
-      }
-        } catch (error: any) {
-          spinner.fail();
-          if (error.isAxiosError) {
-            console.log(
-              chalk.red("❌ Could not connect to MangaDex API. Please check your internet connection.")
-            );
-          } else {
-            console.log(
-              chalk.red("❌ An unexpected error occurred: ") +
-                (error instanceof Error ? error.message : "Unknown error")
-            );
-          }
+          continue; // Re-show prompt for the same page
+        } else if (selectedIndex === "search") {
+          return false;
+        } else if (selectedIndex === "help") {
+          displayHelp();
           await inquirer.prompt([
             {
               type: "input",
               name: "continue",
-              message: "Press Enter to return to a new search...",
+              message: "Press Enter to return to the manga list...",
             },
           ]);
-          return false;
+          continue; // Re-show prompt for the same page
+        } else if (selectedIndex === "exit") {
+          process.exit(0);
+        } else {
+          const selected = mangas[selectedIndex];
+
+          clearTerminal();
+          displayMangaDetails(selected);
+
+          const { action } = await inquirer.prompt([
+            {
+              type: "list",
+              name: "action",
+              message: "What do you want to do?",
+              choices: [
+                { name: "View Chapters", value: "view_chapters" },
+                { name: "Back to manga list", value: "back" },
+              ],
+            },
+          ]);
+
+          if (action === "view_chapters") {
+            const title =
+              selected?.title?.en ||
+              (selected?.title && Object.values(selected.title)[0]) ||
+              "Unknown Title";
+
+            await handleChapterSelection(selected.id, title);
+            // After returning, re-show the same manga list instantly
+            continue; // Continue the inner loop
+          } else {
+            // If "Back to manga list" is chosen, just re-show the list
+            continue; // Continue the inner loop
+          }
         }
+      }
+    } catch (error: any) {
+      spinner.fail();
+      if (error.isAxiosError) {
+        console.log(
+          chalk.red("❌ Could not connect to MangaDex API. Please check your internet connection.")
+        );
+      } else {
+        console.log(
+          chalk.red("❌ An unexpected error occurred: ") +
+            (error instanceof Error ? error.message : "Unknown error")
+        );
+      }
+      await inquirer.prompt([
+        {
+          type: "input",
+          name: "continue",
+          message: "Press Enter to return to a new search...",
+        },
+      ]);
+      return false;
+    }
   }
 }
