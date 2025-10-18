@@ -85,25 +85,24 @@ export async function handleChapterSelection(
       console.log(`Selected Manga: ${mangaTitle} — Page ${chapterPage}\n`);
 
       if (!chapters || !chapters.length) {
-        console.log("⚠ No chapters found on this page.");
         if (chapterPage > 1) {
           chapterPage--;
-          console.log("🔄 Returning to previous page...");
           await inquirer.prompt([
             {
-              type: "input",
-              name: "continue",
-              message: "Press Enter to continue...",
+              type: "list",
+              name: "action",
+              message: "No chapters found on this page.",
+              choices: ["Return to Previous Page"],
             },
           ]);
           continue;
         } else {
-          console.log("❌ No chapters available for this manga.");
           await inquirer.prompt([
             {
-              type: "input",
-              name: "continue",
-              message: "Press Enter to return to manga selection...",
+              type: "list",
+              name: "action",
+              message: "No chapters available for this manga.",
+              choices: ["Return to Manga Details"],
             },
           ]);
           return { shouldReturnToManga: true };
@@ -236,25 +235,24 @@ export async function handleMangaSelection(query: string): Promise<boolean> {
       const mangas = searchResult?.mangas || [];
 
       if (!mangas || !mangas.length) {
-        console.log("⚠ No results found on this page.");
         if (page > 1) {
           page--;
-          console.log("🔄 Returning to previous page...");
           await inquirer.prompt([
             {
-              type: "input",
-              name: "continue",
-              message: "Press Enter to continue...",
+              type: "list",
+              name: "action",
+              message: "No results found on this page.",
+              choices: ["Return to Previous Page"],
             },
           ]);
           continue; // Continue outer loop to re-fetch previous page
         } else {
-          console.log("❌ No results found for this search.");
           await inquirer.prompt([
             {
-              type: "input",
-              name: "continue",
-              message: "Press Enter to return to a new search...",
+              type: "list",
+              name: "action",
+              message: "No results found for this search.",
+              choices: ["Return to New Search"],
             },
           ]);
           return false;
