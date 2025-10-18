@@ -23,7 +23,7 @@ const axios_1 = __importDefault(require("axios"));
  */
 function fetchChaptersByMangaId(mangaId_1) {
     return __awaiter(this, arguments, void 0, function* (mangaId, page = 1) {
-        const limit = 100;
+        const limit = 500;
         const offset = (page - 1) * limit;
         try {
             const response = yield axios_1.default.get(`https://api.mangadex.org/manga/${mangaId}/feed`, {
