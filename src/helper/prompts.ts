@@ -368,62 +368,76 @@ export async function handleMangaSelection(query: string): Promise<boolean> {
         } else {
           const selected = mangas[selectedIndex];
 
-          clearTerminal();
-          displayMangaDetails(selected);
+          let inMangaDetailView = true;
+          while (inMangaDetailView) {
+            clearTerminal();
+            displayMangaDetails(selected);
 
-          const { action } = await inquirer.prompt([
-            {
-              type: "list",
-              name: "action",
-              message: "What do you want to do?",
-              choices: [
-                { name: "View Chapters", value: "view_chapters" },
-                { name: "Back to manga list", value: "back" },
-              ],
-            },
-          ]);
+            const { action } = await inquirer.prompt([
+              {
+                type: "list",
+                name: "action",
+                message: "What do you want to do?",
+                choices: [
+                  { name: "View Chapters", value: "view_chapters" },
+                  { name: "Back to manga list", value: "back" },
+                ],
+              },
+            ]);
 
-          if (action === "view_chapters") {
-            const title =
-              selected?.title?.en ||
-              (selected?.title && Object.values(selected.title)[0]) ||
-              "Unknown Title";
+            if (action === "view_chapters") {
+              const title =
+                selected?.title?.en ||
+                (selected?.title && Object.values(selected.title)[0]) ||
+                "Unknown Title";
 
-            // ** NEW: Language Selection Logic **
-            const availableLanguages = selected.available_translated_languages || [];
-            if (availableLanguages.length === 0) {
-                console.log("No translated chapters available for this manga.");
-                await inquirer.prompt([{ type: 'input', name: 'continue', message: 'Press Enter to continue...' }]);
+              // ** NEW: Language Selection Logic **
+              const availableLanguages =
+                selected.available_translated_languages || [];
+              if (availableLanguages.length === 0) {
+                console.log(
+                  "No translated chapters available for this manga."
+                );
+                await inquirer.prompt([
+                  {
+                    type: "input",
+                    name: "continue",
+                    message: "Press Enter to continue...",
+                  },
+                ]);
                 continue;
-            }
+              }
 
-            const languageChoices = [
+              const languageChoices = [
                 { name: "All Languages", value: "all" },
                 new inquirer.Separator(),
                 ...availableLanguages.sort().map((lang: string) => ({
-                    name: getLanguageName(lang),
-                    value: lang,
+                  name: getLanguageName(lang),
+                  value: lang,
                 })),
-            ];
+              ];
 
-            const { selectedLanguage } = await inquirer.prompt([
+              const { selectedLanguage } = await inquirer.prompt([
                 {
-                    type: 'list',
-                    name: 'selectedLanguage',
-                    message: 'Select a language for chapters',
-                    choices: languageChoices,
-                }
-            ])
+                  type: "list",
+                  name: "selectedLanguage",
+                  message: "Select a language for chapters",
+                  choices: languageChoices,
+                },
+              ]);
 
-
-            await handleChapterSelection(selected.id, title, selectedLanguage);
-            // After returning, re-show the same manga list instantly
-            continue; // Continue the inner loop
-          } else {
-            // If "Back to manga list" is chosen, just re-show the list
-            continue; // Continue the inner loop
+              await handleChapterSelection(
+                selected.id,
+                title,
+                selectedLanguage
+              );
+              // After returning, re-show the same manga list instantly
+              continue; // Continue the inner loop
+            } else {
+              inMangaDetailView = false;
+            }
           }
-        }
+          continue;
       }
     } catch (error: any) {
       spinner.fail();

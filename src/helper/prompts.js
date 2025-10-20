@@ -353,74 +353,86 @@ function handleMangaSelection(query) {
                     }
                     else {
                         const selected = mangas[selectedIndex];
-                        (0, clear_terminal_1.clearTerminal)();
-                        (0, display_manga_details_1.displayMangaDetails)(selected);
-                        const { action } = yield inquirer_1.default.prompt([
-                            {
-                                type: "list",
-                                name: "action",
-                                message: "What do you want to do?",
-                                choices: [
-                                    { name: "View Chapters", value: "view_chapters" },
-                                    { name: "Back to manga list", value: "back" },
-                                ],
-                            },
-                        ]);
-                        if (action === "view_chapters") {
-                            const title = ((_a = selected === null || selected === void 0 ? void 0 : selected.title) === null || _a === void 0 ? void 0 : _a.en) ||
-                                ((selected === null || selected === void 0 ? void 0 : selected.title) && Object.values(selected.title)[0]) ||
-                                "Unknown Title";
-                            // ** NEW: Language Selection Logic **
-                            const availableLanguages = selected.available_translated_languages || [];
-                            if (availableLanguages.length === 0) {
-                                console.log("No translated chapters available for this manga.");
-                                yield inquirer_1.default.prompt([{ type: 'input', name: 'continue', message: 'Press Enter to continue...' }]);
-                                continue;
-                            }
-                            const languageChoices = [
-                                { name: "All Languages", value: "all" },
-                                new inquirer_1.default.Separator(),
-                                ...availableLanguages.sort().map((lang) => ({
-                                    name: getLanguageName(lang),
-                                    value: lang,
-                                })),
-                            ];
-                            const { selectedLanguage } = yield inquirer_1.default.prompt([
+                        let inMangaDetailView = true;
+                        while (inMangaDetailView) {
+                            (0, clear_terminal_1.clearTerminal)();
+                            (0, display_manga_details_1.displayMangaDetails)(selected);
+                            const { action } = yield inquirer_1.default.prompt([
                                 {
-                                    type: 'list',
-                                    name: 'selectedLanguage',
-                                    message: 'Select a language for chapters',
-                                    choices: languageChoices,
-                                }
+                                    type: "list",
+                                    name: "action",
+                                    message: "What do you want to do?",
+                                    choices: [
+                                        { name: "View Chapters", value: "view_chapters" },
+                                        { name: "Back to manga list", value: "back" },
+                                    ],
+                                },
                             ]);
-                            yield handleChapterSelection(selected.id, title, selectedLanguage);
-                            // After returning, re-show the same manga list instantly
-                            continue; // Continue the inner loop
+                            if (action === "view_chapters") {
+                                const title = ((_a = selected === null || selected === void 0 ? void 0 : selected.title) === null || _a === void 0 ? void 0 : _a.en) ||
+                                    ((selected === null || selected === void 0 ? void 0 : selected.title) && Object.values(selected.title)[0]) ||
+                                    "Unknown Title";
+                                // ** NEW: Language Selection Logic **
+                                const availableLanguages = selected.available_translated_languages || [];
+                                if (availableLanguages.length === 0) {
+                                    console.log("No translated chapters available for this manga.");
+                                    yield inquirer_1.default.prompt([
+                                        {
+                                            type: "input",
+                                            name: "continue",
+                                            message: "Press Enter to continue...",
+                                        },
+                                    ]);
+                                    continue;
+                                }
+                                const languageChoices = [
+                                    { name: "All Languages", value: "all" },
+                                    new inquirer_1.default.Separator(),
+                                    ...availableLanguages.sort().map((lang) => ({
+                                        name: getLanguageName(lang),
+                                        value: lang,
+                                    })),
+                                ];
+                                const { selectedLanguage } = yield inquirer_1.default.prompt([
+                                    {
+                                        type: "list",
+                                        name: "selectedLanguage",
+                                        message: "Select a language for chapters",
+                                        choices: languageChoices,
+                                    },
+                                ]);
+                                yield handleChapterSelection(selected.id, title, selectedLanguage);
+                                // After returning, re-show the same manga list instantly
+                                continue; // Continue the inner loop
+                            }
+                            else {
+                                inMangaDetailView = false;
+                            }
                         }
-                        else {
-                            // If "Back to manga list" is chosen, just re-show the list
-                            continue; // Continue the inner loop
-                        }
+                        continue;
                     }
                 }
+                try { }
+                catch (error) {
+                    spinner.fail();
+                    if (error.isAxiosError) {
+                        console.log(chalk_1.default.red("❌ Could not connect to MangaDex API. Please check your internet connection."));
+                    }
+                    else {
+                        console.log(chalk_1.default.red("❌ An unexpected error occurred: ") +
+                            (error instanceof Error ? error.message : "Unknown error"));
+                    }
+                    yield inquirer_1.default.prompt([
+                        {
+                            type: "input",
+                            name: "continue",
+                            message: "Press Enter to return to a new search...",
+                        },
+                    ]);
+                    return false;
+                }
             }
-            catch (error) {
-                spinner.fail();
-                if (error.isAxiosError) {
-                    console.log(chalk_1.default.red("❌ Could not connect to MangaDex API. Please check your internet connection."));
-                }
-                else {
-                    console.log(chalk_1.default.red("❌ An unexpected error occurred: ") +
-                        (error instanceof Error ? error.message : "Unknown error"));
-                }
-                yield inquirer_1.default.prompt([
-                    {
-                        type: "input",
-                        name: "continue",
-                        message: "Press Enter to return to a new search...",
-                    },
-                ]);
-                return false;
+            finally {
             }
         }
     });
