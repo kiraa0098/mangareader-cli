@@ -10,6 +10,7 @@ export function displayMangaDetails(manga: any): void {
   }
 
   console.log(chalk.cyan('\nDetails:'));
+  console.log(`  - ID: ${manga.id}`);
   console.log(`  - Status: ${manga.status}`);
   console.log(`  - Year: ${manga.year}`);
   console.log(`  - Content Rating: ${manga.content_rating}`);
