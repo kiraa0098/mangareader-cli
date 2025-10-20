@@ -25,6 +25,30 @@ const search_manga_1 = require("../api/search_manga");
 const display_manga_details_1 = require("./display_manga_details");
 const help_1 = require("./help");
 const chalk_1 = __importDefault(require("chalk"));
+// Helper to map language codes to full names
+const languageMap = {
+    en: "English",
+    es: "Spanish",
+    fr: "French",
+    ja: "Japanese",
+    ko: "Korean",
+    "zh-ro": "Chinese (Romanized)",
+    zh: "Chinese",
+    "pt-br": "Portuguese (Brazil)",
+    pt: "Portuguese",
+    ru: "Russian",
+    de: "German",
+    vi: "Vietnamese",
+    id: "Indonesian",
+    tr: "Turkish",
+    it: "Italian",
+    th: "Thai",
+    ar: "Arabic",
+    pl: "Polish",
+    sv: "Swedish",
+    nl: "Dutch",
+};
+const getLanguageName = (code) => languageMap[code] || code;
 function handleChapterViewing(chapterId, chapterTitle, chapterNumber) {
     return __awaiter(this, void 0, void 0, function* () {
         const spinner = (0, ora_1.default)(`Loading Chapter ${chapterNumber} - ${chapterTitle}...`).start();
@@ -73,16 +97,17 @@ function handleChapterViewing(chapterId, chapterTitle, chapterNumber) {
         }
     });
 }
-function handleChapterSelection(mangaId, mangaTitle) {
+function handleChapterSelection(mangaId, mangaTitle, language) {
     return __awaiter(this, void 0, void 0, function* () {
         let chapterPage = 1;
+        const languageName = language === 'all' ? 'All Languages' : getLanguageName(language);
         while (true) {
-            const spinner = (0, ora_1.default)(`Fetching chapters for ${mangaTitle}...`).start();
+            const spinner = (0, ora_1.default)(`Fetching chapters for ${mangaTitle} (${languageName})...`).start();
             try {
-                const chapters = yield (0, manga_chapters_1.fetchChaptersByMangaId)(mangaId, chapterPage);
+                const chapters = yield (0, manga_chapters_1.fetchChaptersByMangaId)(mangaId, chapterPage, language);
                 spinner.succeed();
                 (0, clear_terminal_1.clearTerminal)();
-                console.log(`Selected Manga: ${mangaTitle} — Page ${chapterPage}\n`);
+                console.log(`Selected Manga: ${mangaTitle} — Language: ${languageName} — Page ${chapterPage}\n`);
                 if (!chapters || !chapters.length) {
                     if (chapterPage > 1) {
                         chapterPage--;
@@ -101,17 +126,20 @@ function handleChapterSelection(mangaId, mangaTitle) {
                             {
                                 type: "list",
                                 name: "action",
-                                message: "No chapters available for this manga.",
+                                message: `No chapters available for this manga in ${languageName}.`,
                                 choices: ["Return to Manga Details"],
                             },
                         ]);
                         return { shouldReturnToManga: true };
                     }
                 }
-                const chapterChoices = chapters.map((chapter, index) => ({
-                    name: `[${index + 1}] Ch. ${chapter.chapter || "N/A"}: ${chapter.title || "No Title"}`,
-                    value: index,
-                }));
+                const chapterChoices = chapters.map((chapter, index) => {
+                    const lang = chapter.language ? `(${getLanguageName(chapter.language)})` : '';
+                    return {
+                        name: `[${index + 1}] Ch. ${chapter.chapter || "N/A"}: ${chapter.title || "No Title"} ${chalk_1.default.gray(lang)}`,
+                        value: index,
+                    };
+                });
                 const { selectedIndex } = yield inquirer_1.default.prompt([
                     {
                         type: "list",
@@ -342,7 +370,30 @@ function handleMangaSelection(query) {
                             const title = ((_a = selected === null || selected === void 0 ? void 0 : selected.title) === null || _a === void 0 ? void 0 : _a.en) ||
                                 ((selected === null || selected === void 0 ? void 0 : selected.title) && Object.values(selected.title)[0]) ||
                                 "Unknown Title";
-                            yield handleChapterSelection(selected.id, title);
+                            // ** NEW: Language Selection Logic **
+                            const availableLanguages = selected.available_translated_languages || [];
+                            if (availableLanguages.length === 0) {
+                                console.log("No translated chapters available for this manga.");
+                                yield inquirer_1.default.prompt([{ type: 'input', name: 'continue', message: 'Press Enter to continue...' }]);
+                                continue;
+                            }
+                            const languageChoices = [
+                                { name: "All Languages", value: "all" },
+                                new inquirer_1.default.Separator(),
+                                ...availableLanguages.sort().map((lang) => ({
+                                    name: getLanguageName(lang),
+                                    value: lang,
+                                })),
+                            ];
+                            const { selectedLanguage } = yield inquirer_1.default.prompt([
+                                {
+                                    type: 'list',
+                                    name: 'selectedLanguage',
+                                    message: 'Select a language for chapters',
+                                    choices: languageChoices,
+                                }
+                            ]);
+                            yield handleChapterSelection(selected.id, title, selectedLanguage);
                             // After returning, re-show the same manga list instantly
                             continue; // Continue the inner loop
                         }

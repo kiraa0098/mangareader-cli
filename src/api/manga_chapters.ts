@@ -9,22 +9,32 @@ import axios from "axios";
  */
 export async function fetchChaptersByMangaId(
   mangaId: string,
-  page: number = 1
+  page: number = 1,
+  language: string = "en" // Default to English, but UI will guide selection
 ) {
   const limit = 500;
   const offset = (page - 1) * limit;
+
+  // Dynamically build params
+  const params: any = {
+    includeFuturePublishAt: 0,
+    includeEmptyPages: 0,
+    limit,
+    offset,
+  };
+
+  // If a specific language is chosen (and it's not 'all'), add it to the query
+  if (language && language.toLowerCase() !== "all") {
+    params.translatedLanguage = [language];
+  }
+  // If language is 'all' or undefined, the translatedLanguage param is omitted,
+  // and the API returns all languages.
 
   try {
     const response = await axios.get(
       `https://api.mangadex.org/manga/${mangaId}/feed`,
       {
-        params: {
-          includeFuturePublishAt: 0,
-          includeEmptyPages: 0,
-          translatedLanguage: ["en"], // ✅ Filter by English only
-          limit,
-          offset,
-        },
+        params, // Use the dynamically built params
         paramsSerializer: (params) => {
           // Axios needs help serializing arrays into `translatedLanguage[]=en`
           const searchParams = new URLSearchParams();

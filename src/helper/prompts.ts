@@ -10,6 +10,32 @@ import { displayMangaDetails } from "./display_manga_details";
 import { displayHelp } from "./help";
 import chalk from "chalk";
 
+// Helper to map language codes to full names
+const languageMap: { [key: string]: string } = {
+  en: "English",
+  es: "Spanish",
+  fr: "French",
+  ja: "Japanese",
+  ko: "Korean",
+  "zh-ro": "Chinese (Romanized)",
+  zh: "Chinese",
+  "pt-br": "Portuguese (Brazil)",
+  pt: "Portuguese",
+  ru: "Russian",
+  de: "German",
+  vi: "Vietnamese",
+  id: "Indonesian",
+  tr: "Turkish",
+  it: "Italian",
+  th: "Thai",
+  ar: "Arabic",
+  pl: "Polish",
+  sv: "Swedish",
+  nl: "Dutch",
+};
+
+const getLanguageName = (code: string) => languageMap[code] || code;
+
 async function handleChapterViewing(
   chapterId: string,
   chapterTitle: string,
@@ -72,17 +98,19 @@ async function handleChapterViewing(
 
 export async function handleChapterSelection(
   mangaId: string,
-  mangaTitle: string
+  mangaTitle: string,
+  language: string
 ): Promise<{ shouldReturnToManga: boolean }> {
   let chapterPage = 1;
+  const languageName = language === 'all' ? 'All Languages' : getLanguageName(language);
 
   while (true) {
-    const spinner = ora(`Fetching chapters for ${mangaTitle}...`).start();
+    const spinner = ora(`Fetching chapters for ${mangaTitle} (${languageName})...`).start();
     try {
-      const chapters = await fetchChaptersByMangaId(mangaId, chapterPage);
+      const chapters = await fetchChaptersByMangaId(mangaId, chapterPage, language);
       spinner.succeed();
       clearTerminal();
-      console.log(`Selected Manga: ${mangaTitle} — Page ${chapterPage}\n`);
+      console.log(`Selected Manga: ${mangaTitle} — Language: ${languageName} — Page ${chapterPage}\n`);
 
       if (!chapters || !chapters.length) {
         if (chapterPage > 1) {
@@ -101,7 +129,7 @@ export async function handleChapterSelection(
             {
               type: "list",
               name: "action",
-              message: "No chapters available for this manga.",
+              message: `No chapters available for this manga in ${languageName}.`,
               choices: ["Return to Manga Details"],
             },
           ]);
@@ -109,10 +137,13 @@ export async function handleChapterSelection(
         }
       }
 
-      const chapterChoices = chapters.map((chapter: any, index: number) => ({
-        name: `[${index + 1}] Ch. ${chapter.chapter || "N/A"}: ${chapter.title || "No Title"}`,
-        value: index,
-      }));
+      const chapterChoices = chapters.map((chapter: any, index: number) => {
+        const lang = chapter.language ? `(${getLanguageName(chapter.language)})` : '';
+        return {
+            name: `[${index + 1}] Ch. ${chapter.chapter || "N/A"}: ${chapter.title || "No Title"} ${chalk.gray(lang)}`,
+            value: index,
+        }
+      });
 
       const { selectedIndex } = await inquirer.prompt([
         {
@@ -358,7 +389,34 @@ export async function handleMangaSelection(query: string): Promise<boolean> {
               (selected?.title && Object.values(selected.title)[0]) ||
               "Unknown Title";
 
-            await handleChapterSelection(selected.id, title);
+            // ** NEW: Language Selection Logic **
+            const availableLanguages = selected.available_translated_languages || [];
+            if (availableLanguages.length === 0) {
+                console.log("No translated chapters available for this manga.");
+                await inquirer.prompt([{ type: 'input', name: 'continue', message: 'Press Enter to continue...' }]);
+                continue;
+            }
+
+            const languageChoices = [
+                { name: "All Languages", value: "all" },
+                new inquirer.Separator(),
+                ...availableLanguages.sort().map((lang: string) => ({
+                    name: getLanguageName(lang),
+                    value: lang,
+                })),
+            ];
+
+            const { selectedLanguage } = await inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'selectedLanguage',
+                    message: 'Select a language for chapters',
+                    choices: languageChoices,
+                }
+            ])
+
+
+            await handleChapterSelection(selected.id, title, selectedLanguage);
             // After returning, re-show the same manga list instantly
             continue; // Continue the inner loop
           } else {
