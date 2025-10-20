@@ -25,6 +25,25 @@
 
 ---
 
+## Prerequisites: First-Time Setup
+
+For MangaCLI to work, your computer needs **Node.js**. If you don't have it, here’s a simple guide to get set up.
+
+### What is Node.js and why do I need it?
+Think of Node.js as an engine that lets your computer run this application.
+
+The main reason you need to install Node.js is that it comes with **npm** (Node Package Manager). **npm** is the tool that actually downloads and installs `mangareader-cli` from the internet onto your computer.
+
+So, the path is: **Install Node.js** → **Get npm automatically** → **Use npm to install MangaCLI**.
+
+### How to Install Node.js
+1.  **Go to the official Node.js website:** [nodejs.org](https://nodejs.org/en/download/)
+2.  **Download the installer:** Choose the **LTS** (Long-Term Support) version for your operating system (e.g., Windows Installer or macOS Installer). LTS is the most stable and recommended version for most users.
+3.  **Run the installer:** Open the downloaded file and follow the on-screen instructions. You can safely accept the default options by clicking "Next" through the steps.
+4.  **Verify the installation (Optional):** Once installed, you can open your terminal (Command Prompt on Windows or Terminal on macOS) and type `node -v`. If it shows a version number, you're all set!
+
+---
+
 ## 🚀 Installation
 
 To get started, you need to have Node.js and npm installed. Then, install MangaCLI globally:
