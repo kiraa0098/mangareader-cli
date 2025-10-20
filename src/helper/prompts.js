@@ -372,7 +372,6 @@ function handleMangaSelection(query) {
                                 const title = ((_a = selected === null || selected === void 0 ? void 0 : selected.title) === null || _a === void 0 ? void 0 : _a.en) ||
                                     ((selected === null || selected === void 0 ? void 0 : selected.title) && Object.values(selected.title)[0]) ||
                                     "Unknown Title";
-                                // ** NEW: Language Selection Logic **
                                 const availableLanguages = selected.available_translated_languages || [];
                                 if (availableLanguages.length === 0) {
                                     console.log("No translated chapters available for this manga.");
@@ -402,8 +401,6 @@ function handleMangaSelection(query) {
                                     },
                                 ]);
                                 yield handleChapterSelection(selected.id, title, selectedLanguage);
-                                // After returning, re-show the same manga list instantly
-                                continue; // Continue the inner loop
                             }
                             else {
                                 inMangaDetailView = false;
@@ -412,27 +409,24 @@ function handleMangaSelection(query) {
                         continue;
                     }
                 }
-                try { }
-                catch (error) {
-                    spinner.fail();
-                    if (error.isAxiosError) {
-                        console.log(chalk_1.default.red("❌ Could not connect to MangaDex API. Please check your internet connection."));
-                    }
-                    else {
-                        console.log(chalk_1.default.red("❌ An unexpected error occurred: ") +
-                            (error instanceof Error ? error.message : "Unknown error"));
-                    }
-                    yield inquirer_1.default.prompt([
-                        {
-                            type: "input",
-                            name: "continue",
-                            message: "Press Enter to return to a new search...",
-                        },
-                    ]);
-                    return false;
-                }
             }
-            finally {
+            catch (error) {
+                spinner.fail();
+                if (error.isAxiosError) {
+                    console.log(chalk_1.default.red("❌ Could not connect to MangaDex API. Please check your internet connection."));
+                }
+                else {
+                    console.log(chalk_1.default.red("❌ An unexpected error occurred: ") +
+                        (error instanceof Error ? error.message : "Unknown error"));
+                }
+                yield inquirer_1.default.prompt([
+                    {
+                        type: "input",
+                        name: "continue",
+                        message: "Press Enter to return to a new search...",
+                    },
+                ]);
+                return false;
             }
         }
     });

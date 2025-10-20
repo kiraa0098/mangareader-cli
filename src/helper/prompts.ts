@@ -391,7 +391,6 @@ export async function handleMangaSelection(query: string): Promise<boolean> {
                 (selected?.title && Object.values(selected.title)[0]) ||
                 "Unknown Title";
 
-              // ** NEW: Language Selection Logic **
               const availableLanguages =
                 selected.available_translated_languages || [];
               if (availableLanguages.length === 0) {
@@ -431,13 +430,12 @@ export async function handleMangaSelection(query: string): Promise<boolean> {
                 title,
                 selectedLanguage
               );
-              // After returning, re-show the same manga list instantly
-              continue; // Continue the inner loop
             } else {
               inMangaDetailView = false;
             }
           }
           continue;
+        }
       }
     } catch (error: any) {
       spinner.fail();
