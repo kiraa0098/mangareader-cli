@@ -33,9 +33,6 @@ function fetchChaptersByMangaId(mangaId_1) {
                     translatedLanguage: ["en"], // ✅ Filter by English only
                     limit,
                     offset,
-                    order: {
-                        chapter: "desc",
-                    },
                 },
                 paramsSerializer: (params) => {
                     // Axios needs help serializing arrays into `translatedLanguage[]=en`
@@ -57,7 +54,7 @@ function fetchChaptersByMangaId(mangaId_1) {
                     return searchParams.toString();
                 },
             });
-            return response.data.data.map((chapter) => ({
+            const chapters = response.data.data.map((chapter) => ({
                 id: chapter.id,
                 title: chapter.attributes.title,
                 chapter: chapter.attributes.chapter,
@@ -66,6 +63,23 @@ function fetchChaptersByMangaId(mangaId_1) {
                 publishAt: chapter.attributes.publishAt,
                 externalUrl: chapter.attributes.externalUrl,
             }));
+            // Sort chapters by chapter number in descending order.
+            // The `chapter` attribute can be a string, so we need to parse it.
+            chapters.sort((a, b) => {
+                const numA = parseFloat(a.chapter);
+                const numB = parseFloat(b.chapter);
+                // Handle cases where chapter is not a number (e.g., "extra", "oneshot")
+                if (isNaN(numA) && isNaN(numB)) {
+                    // If both are not numbers, sort by publish date as a fallback
+                    return new Date(b.publishAt).getTime() - new Date(a.publishAt).getTime();
+                }
+                if (isNaN(numA))
+                    return 1; // Push non-numeric 'a' to the end
+                if (isNaN(numB))
+                    return -1; // Push non-numeric 'b' to the end
+                return numB - numA; // Sort descending
+            });
+            return chapters;
         }
         catch (error) {
             console.error("Failed to fetch chapters:", error);

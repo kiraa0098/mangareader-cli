@@ -24,9 +24,6 @@ export async function fetchChaptersByMangaId(
           translatedLanguage: ["en"], // ✅ Filter by English only
           limit,
           offset,
-          order: {
-            chapter: "desc",
-          },
         },
         paramsSerializer: (params) => {
           // Axios needs help serializing arrays into `translatedLanguage[]=en`
@@ -48,7 +45,7 @@ export async function fetchChaptersByMangaId(
       }
     );
 
-    return response.data.data.map((chapter: any) => ({
+    const chapters = response.data.data.map((chapter: any) => ({
       id: chapter.id,
       title: chapter.attributes.title,
       chapter: chapter.attributes.chapter,
@@ -57,6 +54,25 @@ export async function fetchChaptersByMangaId(
       publishAt: chapter.attributes.publishAt,
       externalUrl: chapter.attributes.externalUrl,
     }));
+
+    // Sort chapters by chapter number in descending order.
+    // The `chapter` attribute can be a string, so we need to parse it.
+    chapters.sort((a: any, b: any) => {
+      const numA = parseFloat(a.chapter);
+      const numB = parseFloat(b.chapter);
+
+      // Handle cases where chapter is not a number (e.g., "extra", "oneshot")
+      if (isNaN(numA) && isNaN(numB)) {
+        // If both are not numbers, sort by publish date as a fallback
+        return new Date(b.publishAt).getTime() - new Date(a.publishAt).getTime();
+      }
+      if (isNaN(numA)) return 1; // Push non-numeric 'a' to the end
+      if (isNaN(numB)) return -1; // Push non-numeric 'b' to the end
+
+      return numB - numA; // Sort descending
+    });
+
+    return chapters;
   } catch (error) {
     console.error("Failed to fetch chapters:", error);
     throw new Error("Failed to fetch chapters");
