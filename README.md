@@ -92,7 +92,7 @@ You will be guided through the process of searching, selecting a manga, and choo
 Provide a search query directly as an argument to see results immediately:
 
 ```bash
-npx mangareader-cli "solo leveling"
+npx mangareader-cli "naruto"
 ```
 
 ![Screenshot: Direct Search - Results List](img/direct-search-result.png)
