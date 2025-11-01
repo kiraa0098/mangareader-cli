@@ -32,6 +32,7 @@ function fetchChaptersByMangaId(mangaId_1) {
             includeEmptyPages: 0,
             limit,
             offset,
+            order: { chapter: 'desc' },
         };
         // If a specific language is chosen (and it's not 'all'), add it to the query
         if (language && language.toLowerCase() !== "all") {
