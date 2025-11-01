@@ -18,11 +18,11 @@
 
 - **⚡️ Interactive & Quick Search**: Instantly search for any manga from MangaDex's vast library.
 - **📖 Detailed Manga Info**: View manga details, including description, status, genres, and tags.
-  ![Screenshot: Manga Details View](img/manga_details_view.png)
+  ![Screenshot: Manga Details View](img/manga-details.png)
 - **📚 Seamless Chapter Navigation**: Easily browse through chapter lists with pagination support.
-  ![Screenshot: Chapter List Navigation](img/chapter_list_navigation.png)
+  ![Screenshot: Chapter List Navigation](img/chapter-list.png)
 - **🖥️ Comfortable Reading**: Opens chapters directly in your default web browser for an optimal reading experience.
-  ![Screenshot: Chapter Opened in Browser](img/chapter_in_browser.png)
+  ![Screenshot: Chapter Opened in Browser](img/chapter-example.png)
 - **🎨 Themed & Colorful Interface**: Enjoy a visually appealing and easy-to-navigate terminal UI.
 - **🌐 Cross-Platform**: Works flawlessly on Windows, macOS, and Linux.
 
