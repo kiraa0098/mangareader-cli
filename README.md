@@ -93,7 +93,7 @@ Provide a search query directly as an argument to see results immediately:
 npx mangareader-cli "solo leveling"
 ```
 
-![Screenshot: Direct Search - Results List](img/direct-search-results.png)
+![Screenshot: Direct Search - Results List](img/direct-search-result.png)
 
 ### Navigation
 
