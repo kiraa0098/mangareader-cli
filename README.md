@@ -39,6 +39,7 @@
 For MangaCLI to work, your computer needs **Node.js**. If you don't have it, here’s a simple guide to get set up.
 
 ### What is Node.js and why do I need it?
+
 Think of Node.js as an engine that lets your computer run this application.
 
 The main reason you need to install Node.js is that it comes with **npm** (Node Package Manager). **npm** is the tool that actually downloads and installs `mangareader-cli` from the internet onto your computer.
@@ -46,6 +47,7 @@ The main reason you need to install Node.js is that it comes with **npm** (Node 
 So, the path is: **Install Node.js** → **Get npm automatically** → **Use npm to install MangaCLI**.
 
 ### How to Install Node.js
+
 1.  **Go to the official Node.js website:** [nodejs.org](https://nodejs.org/en/download/)
 2.  **Download the installer:** Choose the **LTS** (Long-Term Support) version for your operating system (e.g., Windows Installer or macOS Installer). LTS is the most stable and recommended version for most users.
 3.  **Run the installer:** Open the downloaded file and follow the on-screen instructions. You can safely accept the default options by clicking "Next" through the steps.
@@ -60,7 +62,8 @@ To get started, you need to have Node.js and npm installed. Then, install MangaC
 ```bash
 npm install -g mangareader-cli
 ```
-*(Note: You might need to publish the package to npm first!)*
+
+_(Note: You might need to publish the package to npm first!)_
 
 ---
 
@@ -78,7 +81,7 @@ Simply run the command without any arguments to enter the interactive search pro
 npx mangareader-cli
 ```
 
-![Screenshot: Interactive Mode - Initial Prompt](img/interactive_mode_initial_prompt.png)
+![Screenshot: Interactive Mode - Initial Prompt](img/initial-prompt.png)
 
 You will be guided through the process of searching, selecting a manga, and choosing a chapter.
 
@@ -90,9 +93,10 @@ Provide a search query directly as an argument to see results immediately:
 npx mangareader-cli "solo leveling"
 ```
 
-![Screenshot: Direct Search - Results List](img/direct_search_results_list.png)
+![Screenshot: Direct Search - Results List](img/direct-search-results.png)
 
 ### Navigation
+
 - Use the **arrow keys** (↑/↓) to navigate lists.
 - Press **Enter** to make a selection.
 - Follow the on-screen prompts for actions like going to the next/previous page, viewing chapters, or exiting.
