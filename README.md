@@ -22,7 +22,9 @@
 - **📚 Seamless Chapter Navigation**: Easily browse through chapter lists with pagination support.
   ![Screenshot: Chapter List Navigation](img/chapter-list.png)
 - **🖥️ Comfortable Reading**: Opens chapters directly in your default web browser for an optimal reading experience.
+
   ![Screenshot: Chapter Opened in Browser](img/chapter-example.png)
+
 - **🎨 Themed & Colorful Interface**: Enjoy a visually appealing and easy-to-navigate terminal UI.
 - **🌐 Cross-Platform**: Works flawlessly on Windows, macOS, and Linux.
 
