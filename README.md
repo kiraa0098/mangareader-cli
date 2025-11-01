@@ -18,11 +18,11 @@
 
 - **⚡️ Interactive & Quick Search**: Instantly search for any manga from MangaDex's vast library.
 - **📖 Detailed Manga Info**: View manga details, including description, status, genres, and tags.
-  ![Screenshot: Manga Details View](assets/screenshots/manga_details_view.png)
+  ![Screenshot: Manga Details View](img/manga_details_view.png)
 - **📚 Seamless Chapter Navigation**: Easily browse through chapter lists with pagination support.
-  ![Screenshot: Chapter List Navigation](assets/screenshots/chapter_list_navigation.png)
+  ![Screenshot: Chapter List Navigation](img/chapter_list_navigation.png)
 - **🖥️ Comfortable Reading**: Opens chapters directly in your default web browser for an optimal reading experience.
-  ![Screenshot: Chapter Opened in Browser](assets/screenshots/chapter_in_browser.png)
+  ![Screenshot: Chapter Opened in Browser](img/chapter_in_browser.png)
 - **🎨 Themed & Colorful Interface**: Enjoy a visually appealing and easy-to-navigate terminal UI.
 - **🌐 Cross-Platform**: Works flawlessly on Windows, macOS, and Linux.
 
@@ -78,7 +78,7 @@ Simply run the command without any arguments to enter the interactive search pro
 npx mangareader-cli
 ```
 
-![Screenshot: Interactive Mode - Initial Prompt](assets/screenshots/interactive_mode_initial_prompt.png)
+![Screenshot: Interactive Mode - Initial Prompt](img/interactive_mode_initial_prompt.png)
 
 You will be guided through the process of searching, selecting a manga, and choosing a chapter.
 
@@ -90,7 +90,7 @@ Provide a search query directly as an argument to see results immediately:
 npx mangareader-cli "solo leveling"
 ```
 
-![Screenshot: Direct Search - Results List](assets/screenshots/direct_search_results_list.png)
+![Screenshot: Direct Search - Results List](img/direct_search_results_list.png)
 
 ### Navigation
 - Use the **arrow keys** (↑/↓) to navigate lists.
