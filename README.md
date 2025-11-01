@@ -66,6 +66,8 @@ npm install -g mangareader-cli
 
 ## 🎮 How to Use
 
+**Note:** We use `npx` to run the CLI. This ensures that you are always using the latest version of the tool without having to worry about global installation paths.
+
 There are two ways to use MangaCLI:
 
 ### 1. Interactive Mode
@@ -73,7 +75,7 @@ There are two ways to use MangaCLI:
 Simply run the command without any arguments to enter the interactive search prompt:
 
 ```bash
-mangareader-cli
+npx mangareader-cli
 ```
 
 ![Screenshot: Interactive Mode - Initial Prompt](assets/screenshots/interactive_mode_initial_prompt.png)
@@ -85,7 +87,7 @@ You will be guided through the process of searching, selecting a manga, and choo
 Provide a search query directly as an argument to see results immediately:
 
 ```bash
-mangareader-cli "solo leveling"
+npx mangareader-cli "solo leveling"
 ```
 
 ![Screenshot: Direct Search - Results List](assets/screenshots/direct_search_results_list.png)
