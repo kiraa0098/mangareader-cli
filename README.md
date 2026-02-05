@@ -80,7 +80,7 @@ There are two ways to use MangaCLI:
 Simply run the command without any arguments to enter the interactive search prompt:
 
 ```bash
-npx mangareader-cli
+npx kiraa0098/mangareader-cli
 ```
 
 ![Screenshot: Interactive Mode - Initial Prompt](img/initial-prompt.png)
