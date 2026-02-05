@@ -62,7 +62,7 @@ So, the path is: **Install Node.js** → **Get npm automatically** → **Use npm
 To get started, you need to have Node.js and npm installed. Then, install MangaCLI globally:
 
 ```bash
-npm install -g mangareader-cli
+npm install -g kiraa0098/mangareader-cli
 ```
 
 _(Note: You might need to publish the package to npm first!)_
